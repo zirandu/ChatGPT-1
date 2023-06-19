@@ -231,6 +231,7 @@ class Chatbot:
                 print(error)
                 raise error
 
+    # 设置访问token
     @logger(is_timed=False)
     def set_access_token(self, access_token: str) -> None:
         """Set access token in request header and self.config, then cache it to file.
@@ -345,6 +346,7 @@ class Chatbot:
             cached = {}
         return cached
 
+    # 登录，调用了其他库
     @logger(is_timed=True)
     def login(self) -> None:
         """Login to OpenAI by email and password"""
@@ -352,6 +354,7 @@ class Chatbot:
             log.error("Insufficient login details provided!")
             error = t.AuthenticationError("Insufficient login details provided!")
             raise error
+        # 调用的是另外个Python库
         auth = Authenticator(
             email=self.config.get("email"),
             password=self.config.get("password"),
@@ -361,6 +364,7 @@ class Chatbot:
 
         self.set_access_token(auth.auth())
 
+    # 对requests request的封装
     @logger(is_timed=True)
     def __send_request(
         self,
@@ -463,6 +467,7 @@ class Chatbot:
             i["message"] = message + i["message"]
             yield i
 
+    # 发送消息
     @logger(is_timed=True)
     def post_messages(
         self,
@@ -482,7 +487,7 @@ class Chatbot:
             parent_id (str | None, optional): UUID for the message to continue on. Defaults to None.
             model (str | None, optional): The model to use. Defaults to None.
             auto_continue (bool, optional): Whether to continue the conversation automatically. Defaults to False.
-            timeout (float, optional): Timeout for getting the full response, unit is second. Defaults to 360.
+            timeout (float, optional): Timeout for getting the full response, unit is second. Defaults to 360.          6分钟的timeout 
 
         Yields: Generator[dict, None, None] - The response from the chatbot
             dict: {
@@ -557,6 +562,7 @@ class Chatbot:
             auto_continue=auto_continue,
         )
 
+    # 提问
     @logger(is_timed=True)
     def ask(
         self,
@@ -608,6 +614,7 @@ class Chatbot:
             timeout=timeout,
         )
 
+    # 对话继续写
     @logger(is_timed=True)
     def continue_write(
         self,
@@ -725,6 +732,7 @@ class Chatbot:
             )
             raise error from ex
 
+    # 获取对话
     @logger(is_timed=True)
     def get_conversations(
         self,
@@ -745,6 +753,7 @@ class Chatbot:
         data = json.loads(response.text)
         return data["items"]
 
+    # 得到消息历史
     @logger(is_timed=True)
     def get_msg_history(self, convo_id: str, encoding: str | None = None) -> list:
         """
@@ -759,6 +768,7 @@ class Chatbot:
             response.encoding = encoding
         return response.json()
 
+    # 分享对话并生成链接
     def share_conversation(
         self,
         title: str = None,
@@ -808,6 +818,7 @@ class Chatbot:
         self.__check_response(response)
         return share_url
 
+    # 生成总结的标题
     @logger(is_timed=True)
     def gen_title(self, convo_id: str, message_id: str) -> str:
         """
@@ -823,7 +834,8 @@ class Chatbot:
         )
         self.__check_response(response)
         return response.json().get("title", "Error generating title")
-
+    
+    # 改变标题
     @logger(is_timed=True)
     def change_title(self, convo_id: str, title: str) -> None:
         """
@@ -835,6 +847,7 @@ class Chatbot:
         response = self.session.patch(url, data=json.dumps({"title": title}))
         self.__check_response(response)
 
+    # 删除对话
     @logger(is_timed=True)
     def delete_conversation(self, convo_id: str) -> None:
         """
@@ -845,6 +858,7 @@ class Chatbot:
         response = self.session.patch(url, data='{"is_visible": false}')
         self.__check_response(response)
 
+    # 清空对话
     @logger(is_timed=True)
     def clear_conversations(self) -> None:
         """
@@ -861,6 +875,7 @@ class Chatbot:
         for x, y in zip(conversations, histories):
             self.conversation_mapping[x["id"]] = y["current_node"]
 
+    # 重新对话
     @logger(is_timed=False)
     def reset_chat(self) -> None:
         """
@@ -882,6 +897,7 @@ class Chatbot:
             self.conversation_id = self.conversation_id_prev_queue.pop()
             self.parent_id = self.parent_id_prev_queue.pop()
 
+    # 得到插件信息
     @logger(is_timed=True)
     def get_plugins(self, offset: int = 0, limit: int = 250, status: str = "approved"):
         """
@@ -896,6 +912,7 @@ class Chatbot:
         # Parse as JSON
         return json.loads(response.text)
 
+    # 安装插件
     @logger(is_timed=True)
     def install_plugin(self, plugin_id: str):
         """
@@ -907,6 +924,7 @@ class Chatbot:
         response = self.session.patch(url, data=json.dumps(payload))
         self.__check_response(response)
 
+    # 安装未认证的插件
     @logger(is_timed=True)
     def get_unverified_plugin(self, domain: str, install: bool = True) -> dict:
         """
@@ -921,7 +939,7 @@ class Chatbot:
             self.install_plugin(response.json().get("id"))
         return response.json()
 
-
+# 异步聊天机器人
 class AsyncChatbot(Chatbot):
     """Async Chatbot class for ChatGPT"""
 
